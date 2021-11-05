@@ -1,0 +1,17 @@
+{
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true,
+    "python.linting.pylintArgs": [
+        "--load-plugins=pylint_django",
+        "--django-settings-module=gamer-raterproject.settings",
+    ],
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "GamerRaterDB",
+            "database": "db.sqlite3"
+        }
+    ],
+    "python.formatting.provider": "autopep8"
+}
