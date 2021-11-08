@@ -7,4 +7,5 @@ SELECT * FROM gamerraterapi_gamecategory;
 SELECT * FROM gamerraterapi_entry;
 SELECT * FROM gamerraterapi_player;
 
-DELETE FROM gamerraterapi_gamecategory;
+DELETE FROM gamerraterapi_review
+WHERE id = 5;
