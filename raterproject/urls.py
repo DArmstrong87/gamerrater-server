@@ -20,11 +20,13 @@ from gamerraterapi.views import login_user, register_user
 from rest_framework import routers
 from gamerraterapi.views import GameView, CategoryView
 from gamerraterapi.views.gamereview import GameReviewView
+from gamerraterapi.views.ratings import RatingsView
 
 router = routers.DefaultRouter(trailing_slash=False)
 router.register(r'games', GameView, 'game')
 router.register(r'categories', CategoryView, 'category')
 router.register(r'reviews', GameReviewView, 'review')
+router.register(r'ratings', RatingsView, 'rating')
 
 urlpatterns = [
     path('', include(router.urls)),

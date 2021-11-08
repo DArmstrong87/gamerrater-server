@@ -6,15 +6,11 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers
 from rest_framework import status
-from gamerraterapi.models import Game, Player
-from gamerraterapi.models import category
-from gamerraterapi.models import game_category
-from gamerraterapi.models.category import Category
-from gamerraterapi.models.game_category import GameCategory
-from rest_framework.decorators import action
+from gamerraterapi.models import Game, Player, Rating
+from django.contrib.auth import get_user_model
 
 
-class GameView(ViewSet):
+class RatingsView(ViewSet):
     """Level up games"""
 
     def create(self, request):
@@ -34,17 +30,12 @@ class GameView(ViewSet):
             # Create a new Python instance of the Game class
             # and set its properties from what was sent in the
             # body of the request from the client.
-            game = Game.objects.create(
-                title=request.data["title"],
-                description=request.data["description"],
-                designer=request.data["designer"],
-                year_released=request.data["year_released"],
-                num_players=request.data["num_players"],
-                time_to_play=request.data["time_to_play"],
-                age=request.data["age"]
+            rating = Rating.objects.create(
+                rating=request.data["rating"],
+                game_id=request.data["gameId"],
+                player=player
             )
-            game.categories.set(request.data["category"])
-            serializer = GameSerializer(game, context={'request': request})
+            serializer = RatingSerializer(rating, context={'request': request})
 
             return Response(serializer.data)
 
@@ -61,13 +52,8 @@ class GameView(ViewSet):
             Response -- JSON serialized game instance
         """
         try:
-            # `pk` is a parameter to this function, and
-            # Django parses it from the URL route parameter
-            #   http://localhost:8000/games/2
-            #
-            # The `2` at the end of the route becomes `pk`
-            game = Game.objects.get(pk=pk)
-            serializer = GameSerializer(game, context={'request': request})
+            rating = Rating.objects.get(pk=pk)
+            serializer = RatingSerializer(rating, context={'request': request})
             return Response(serializer.data)
         except Exception as ex:
             return HttpResponseServerError(ex)
@@ -83,16 +69,10 @@ class GameView(ViewSet):
         # Do mostly the same thing as POST, but instead of
         # creating a new instance of Game, get the game record
         # from the database whose primary key is `pk`
-        game = Game.objects.get(pk=pk)
-        game.title = request.data["title"]
-        game.description = request.data["description"]
-        game.designer = request.data["designer"]
-        game.year_released = request.data["yearReleased"]
-        game.num_players = request.data["numberOfPlayers"]
-        game.time_to_play = request.data["time"]
-        game.age = request.data["age"]
+        rating = Rating.objects.get(pk=pk)
+        rating.rating = request.data["rating"]
 
-        game.save()
+        rating.save()
 
         # 204 status code means everything worked but the
         # server is not sending back any data in the response
@@ -105,12 +85,12 @@ class GameView(ViewSet):
             Response -- 200, 404, or 500 status code
         """
         try:
-            game = Game.objects.get(pk=pk)
-            game.delete()
+            rating = Rating.objects.get(pk=pk)
+            rating.delete()
 
             return Response({}, status=status.HTTP_204_NO_CONTENT)
 
-        except Game.DoesNotExist as ex:
+        except Rating.DoesNotExist as ex:
             return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
 
         except Exception as ex:
@@ -122,24 +102,40 @@ class GameView(ViewSet):
         Returns:
             Response -- JSON serialized list of games
         """
-        # Get all game records from the database
-        games = Game.objects.all()
-        serializer = GameSerializer(
-            games, many=True, context={'request': request})
+        ratings = Rating.objects.all()
+
+        game = self.request.query_params.get('gameId', None)
+        if game is not None:
+            ratings = ratings.filter(game_id__id=game)
+        serializer = RatingSerializer(
+            ratings, many=True, context={'request': request})
         return Response(serializer.data)
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = get_user_model()
+        fields = ['first_name', 'last_name']
 
 
-class GameSerializer(serializers.ModelSerializer):
+class PlayerSerializer(serializers.ModelSerializer):
+    user = UserSerializer(many=False)
+
+    class Meta:
+        model = Player
+        fields = ['user']
+
+
+class RatingSerializer(serializers.ModelSerializer):
     """JSON serializer for games
 
     Arguments:
         serializer type
     """
+    player = PlayerSerializer(many=False)
 
     class Meta:
-        model = Game
-        fields = ('id', 'title', 'description', 'designer',
-                  'year_released', 'num_players', 'time_to_play', 'age', 'categories', 'average_rating')
+        model = Rating
+        fields = ('id', 'rating', 'game',
+                  'player')
         depth = 1
