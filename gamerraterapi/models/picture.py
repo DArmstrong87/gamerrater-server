@@ -4,7 +4,9 @@ class Picture(models.Model):
 
     player = models.ForeignKey("Player", on_delete=models.CASCADE)
     game = models.ForeignKey("Game", on_delete=models.CASCADE)
-    url = models.CharField(max_length=50)
+    image = models.ImageField(
+        upload_to='gameimages', height_field=None,
+        width_field=None, max_length=None, null=True)
 
     def __str__(self):
         return f"{self.id}: {self.url}"
