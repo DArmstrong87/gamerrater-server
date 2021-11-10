@@ -1,6 +1,5 @@
 """View module for handling requests about pictures"""
 from django.core.exceptions import ValidationError
-from django.db.models.fields.files import ImageField
 from rest_framework import status
 from django.http import HttpResponseServerError
 from rest_framework.viewsets import ViewSet
@@ -23,7 +22,6 @@ class PictureView(ViewSet):
             Response -- JSON serialized picture instance
         """
 
-        # Uses the token passed in the `Authorization` header
         player = Player.objects.get(user=request.auth.user)
         game = Game.objects.get(pk = request.data["game_id"])
         game_picture = Picture()
@@ -33,6 +31,8 @@ class PictureView(ViewSet):
         data = ContentFile(base64.b64decode(imgstr), name=f'{request.data["game_id"]}-{uuid.uuid4()}.{ext}')
         
         game_picture.image = data
+        game_picture.game = game
+        game_picture.player = player
         game_picture.save()
         
 
@@ -40,15 +40,8 @@ class PictureView(ViewSet):
         # serialize the picture instance as JSON, and send the
         # JSON as a response to the client request
         try:
-            # Create a new Python instance of the Picture class
-            # and set its properties from what was sent in the
-            # body of the request from the client.
-            picture = Picture.objects.create(
-                player=player,
-                game=game
-            )
             
-            serializer = GameImageSerializer(picture, context={'request': request})
+            serializer = GameImageSerializer(game_picture, context={'request': request})
 
             return Response(serializer.data)
 
@@ -127,5 +120,5 @@ class GameImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Picture
-        fields = ('id', 'url', 'player', 'game')
+        fields = ('id', 'image', 'player', 'game')
         depth = 1
