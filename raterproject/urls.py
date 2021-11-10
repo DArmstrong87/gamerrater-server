@@ -20,13 +20,18 @@ from gamerraterapi.views import login_user, register_user
 from rest_framework import routers
 from gamerraterapi.views import GameView, CategoryView
 from gamerraterapi.views.gamereview import GameReviewView
+from gamerraterapi.views.pictures import PictureView
 from gamerraterapi.views.ratings import RatingsView
+from django.conf.urls.static import static
+from django.conf import settings
+
 
 router = routers.DefaultRouter(trailing_slash=False)
 router.register(r'games', GameView, 'game')
 router.register(r'categories', CategoryView, 'category')
 router.register(r'reviews', GameReviewView, 'review')
 router.register(r'ratings', RatingsView, 'rating')
+router.register(r'pictures', PictureView, 'picture')
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -34,4 +39,4 @@ urlpatterns = [
     path('login', login_user),
     path('api-auth', include('rest_framework.urls', namespace='rest_framework')),
     path('admin/', admin.site.urls),
-]
+] +static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

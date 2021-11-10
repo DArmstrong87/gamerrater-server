@@ -25,7 +25,11 @@ class Game(models.Model):
         total_rating = 0
         for rating in ratings:
             total_rating += rating.rating
-        avg_rating = total_rating/len(ratings)
+        if len(ratings) > 0:
+            avg_rating = total_rating/len(ratings)
+        else:
+            avg_rating = 0
+            
         return avg_rating 
 
         # Calculate the average and return it.
