@@ -6,4 +6,3 @@ from .player import Player
 from .rating import Rating
 from .review import Review
 from .entry import Entry
-from .gamepicture import GamePicture

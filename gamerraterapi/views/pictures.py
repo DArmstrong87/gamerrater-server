@@ -9,6 +9,8 @@ from rest_framework import status
 from gamerraterapi.models import Picture, Player
 from gamerraterapi.models.game import Game
 from django.contrib.auth import get_user_model
+import uuid, base64
+from django.core.files.base import ContentFile
 
 class PictureView(ViewSet):
     """Level up pictures"""
@@ -20,23 +22,26 @@ class PictureView(ViewSet):
             Response -- JSON serialized picture instance
         """
 
-        # Uses the token passed in the `Authorization` header
         player = Player.objects.get(user=request.auth.user)
         game = Game.objects.get(pk = request.data["game_id"])
+        game_picture = Picture()
+        
+        format, imgstr = request.data["url"].split(';base64,')
+        ext = format.split('/')[-1]
+        data = ContentFile(base64.b64decode(imgstr), name=f'{request.data["game_id"]}-{uuid.uuid4()}.{ext}')
+        
+        game_picture.image = data
+        game_picture.game = game
+        game_picture.player = player
+        game_picture.save()
+        
 
         # Try to save the new picture to the database, then
         # serialize the picture instance as JSON, and send the
         # JSON as a response to the client request
         try:
-            # Create a new Python instance of the Picture class
-            # and set its properties from what was sent in the
-            # body of the request from the client.
-            picture = Picture.objects.create(
-                url=request.data["url"],
-                player=player,
-                game=game
-            )
-            serializer = GameImageSerializer(picture, context={'request': request})
+            
+            serializer = GameImageSerializer(game_picture, context={'request': request})
 
             return Response(serializer.data)
 
@@ -58,25 +63,6 @@ class PictureView(ViewSet):
             return Response(serializer.data)
         except Exception as ex:
             return HttpResponseServerError(ex)
-
-    def update(self, request, pk=None):
-        """Handle PUT requests for a picture
-
-        Returns:
-            Response -- Empty body with 204 status code
-        """
-        player = Player.objects.get(user=request.auth.user)
-
-        # Do mostly the same thing as POST, but instead of
-        # creating a new instance of Picture, get the picture record
-        # from the database whose primary key is `pk`
-        picture = Picture.objects.get(pk=pk)
-        picture.url = request.data["url"]
-        picture.save()
-
-        # 204 status code means everything worked but the
-        # server is not sending back any data in the response
-        return Response({}, status=status.HTTP_204_NO_CONTENT)
 
     def destroy(self, request, pk=None):
         """Handle DELETE requests for a single picture
@@ -134,5 +120,5 @@ class GameImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Picture
-        fields = ('id', 'url', 'player', 'game')
+        fields = ('id', 'image', 'player', 'game')
         depth = 1
