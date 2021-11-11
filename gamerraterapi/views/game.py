@@ -1,18 +1,11 @@
 """View module for handling requests about games"""
 from django.core.exceptions import ValidationError
-from rest_framework import status
 from django.http import HttpResponseServerError
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
-from rest_framework import serializers
-from rest_framework import status
+from rest_framework import serializers, status
 from gamerraterapi.models import Game, Player
-from gamerraterapi.models import category
-from gamerraterapi.models import game_category
-from gamerraterapi.models.category import Category
-from gamerraterapi.models.game_category import GameCategory
-from rest_framework.decorators import action
-
+from django.db.models import Q
 
 class GameView(ViewSet):
     """Level up games"""
@@ -43,7 +36,7 @@ class GameView(ViewSet):
                 time_to_play=request.data["time_to_play"],
                 age=request.data["age"]
             )
-            game.categories.set(request.data["category"])
+            game.categories.set(request.data["categories"])
             serializer = GameSerializer(game, context={'request': request})
 
             return Response(serializer.data)
@@ -87,10 +80,11 @@ class GameView(ViewSet):
         game.title = request.data["title"]
         game.description = request.data["description"]
         game.designer = request.data["designer"]
-        game.year_released = request.data["yearReleased"]
-        game.num_players = request.data["numberOfPlayers"]
-        game.time_to_play = request.data["time"]
+        game.year_released = request.data["year_released"]
+        game.num_players = request.data["num_players"]
+        game.time_to_play = request.data["time_to_play"]
         game.age = request.data["age"]
+        game.categories.set(request.data["categories"])
 
         game.save()
 
@@ -124,11 +118,21 @@ class GameView(ViewSet):
         """
         # Get all game records from the database
         games = Game.objects.all()
+
+        search_text = self.request.query_params.get('q', None)
+        order_by_prop = self.request.query_params.get('orderby', None)
+        if search_text is not None:
+            games = Game.objects.filter(
+                Q(title__contains=search_text) |
+                Q(description__contains=search_text) |
+                Q(designer__contains=search_text)
+            )
+        if order_by_prop is not None:
+            games = Game.objects.order_by(order_by_prop)
+
         serializer = GameSerializer(
             games, many=True, context={'request': request})
         return Response(serializer.data)
-
-
 
 
 class GameSerializer(serializers.ModelSerializer):

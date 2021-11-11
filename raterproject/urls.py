@@ -18,10 +18,7 @@ from django.conf.urls import include
 from django.urls import path
 from gamerraterapi.views import login_user, register_user
 from rest_framework import routers
-from gamerraterapi.views import GameView, CategoryView
-from gamerraterapi.views.gamereview import GameReviewView
-from gamerraterapi.views.pictures import PictureView
-from gamerraterapi.views.ratings import RatingsView
+from gamerraterapi.views import GameView, CategoryView, PictureView, RatingsView, GameReviewView
 from django.conf.urls.static import static
 from django.conf import settings
 
