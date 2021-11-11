@@ -1,18 +1,11 @@
 """View module for handling requests about games"""
 from django.core.exceptions import ValidationError
-from rest_framework import status
 from django.http import HttpResponseServerError
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
-from rest_framework import serializers
-from rest_framework import status
+from rest_framework import serializers, status
 from gamerraterapi.models import Game, Player
-from rest_framework.decorators import action
 from django.db.models import Q
-from gamerraterapi.models import game_category
-
-from gamerraterapi.models.game_category import GameCategory
-
 
 class GameView(ViewSet):
     """Level up games"""
