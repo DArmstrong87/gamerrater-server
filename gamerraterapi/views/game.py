@@ -121,17 +121,19 @@ class GameView(ViewSet):
 
         search_text = self.request.query_params.get('q', None)
         order_by_prop = self.request.query_params.get('orderby', None)
+
         if search_text is not None:
             games = Game.objects.filter(
                 Q(title__contains=search_text) |
                 Q(description__contains=search_text) |
                 Q(designer__contains=search_text)
             )
+
         if order_by_prop is not None:
             games = Game.objects.order_by(order_by_prop)
-
         serializer = GameSerializer(
             games, many=True, context={'request': request})
+        
         return Response(serializer.data)
 
 
