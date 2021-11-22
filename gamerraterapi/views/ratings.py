@@ -4,7 +4,7 @@ from django.http import HttpResponseServerError
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers, status
-from gamerraterapi.models import Player, Rating
+from gamerraterapi.models import Player, Rating, Game
 from django.contrib.auth import get_user_model
 
 
@@ -30,12 +30,12 @@ class RatingsView(ViewSet):
             # body of the request from the client.
             rating = Rating.objects.create(
                 rating=request.data["rating"],
-                game_id=request.data["gameId"],
+                game=Game.objects.get(pk=request.data["gameId"]),
                 player=player
             )
             serializer = RatingSerializer(rating, context={'request': request})
 
-            return Response(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         # If anything went wrong, catch the exception and
         # send a response with a 400 status code to tell the
@@ -123,6 +123,18 @@ class PlayerSerializer(serializers.ModelSerializer):
         model = Player
         fields = ['user']
 
+class GameSerializer(serializers.ModelSerializer):
+    """JSON serializer for games
+
+    Arguments:
+        serializer type
+    """
+
+    class Meta:
+        model = Game
+        fields = ('id', 'title', 'description', 'designer',
+                  'year_released', 'num_players', 'time_to_play', 'age')
+        depth = 1
 
 class RatingSerializer(serializers.ModelSerializer):
     """JSON serializer for games
@@ -131,6 +143,7 @@ class RatingSerializer(serializers.ModelSerializer):
         serializer type
     """
     player = PlayerSerializer(many=False)
+    game = GameSerializer(many=False)
 
     class Meta:
         model = Rating
